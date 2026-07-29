@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#e6007e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Despedida Río">
+<title>Despedida en Río 💍 · Gastos</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23e6007e'/><text x='50' y='68' font-size='52' text-anchor='middle'>💍</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e6007e'/><text x='50' y='68' font-size='52' text-anchor='middle'>💍</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" async onload="window.initSync&&initSync()"></script>
+<style>
+  :root{
+    --pink:#e6007e; --pink-dark:#b0005f; --pink-soft:#ffe3f1; --pink-bg:#fff5fa;
+    --gold:#c99a2e; --gold-soft:#f7e7bf; --ink:#43102f; --muted:#9c6b85;
+    --green:#0e9f6e; --red:#e02424; --card:#ffffff; --radius:18px;
+    --shadow:0 4px 16px rgba(230,0,126,.10);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--pink-bg); color:var(--ink);
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  header{
+    background:linear-gradient(135deg,#ff5fa8 0%, var(--pink) 55%, #8f0a5c 100%);
+    color:#fff; padding:calc(14px + env(safe-area-inset-top)) 18px 18px;
+    border-radius:0 0 26px 26px; box-shadow:var(--shadow);
+    position:relative; overflow:hidden;
+  }
+  header .deco{position:absolute; right:-6px; top:-14px; font-size:74px; opacity:.28; transform:rotate(12deg)}
+  header .deco2{position:absolute; right:64px; bottom:-18px; font-size:52px; opacity:.22; transform:rotate(-10deg)}
+  header h1{margin:0; font-size:22px; letter-spacing:.3px; display:flex; align-items:center; gap:8px}
+  header .sub{font-size:12.5px; opacity:.9; margin-top:3px}
+  .syncpill{display:inline-block; background:rgba(255,255,255,.25); border-radius:999px; padding:2px 10px; font-size:11px; font-weight:800; margin-left:4px; cursor:pointer}
+  .egrid{display:grid; grid-template-columns:repeat(6,1fr); gap:8px}
+  .egrid span{font-size:26px; text-align:center; padding:8px 0; border-radius:12px; background:var(--pink-bg); cursor:pointer}
+  .pemoji{font-size:22px; cursor:pointer; flex-shrink:0; background:var(--pink-bg); border-radius:10px; padding:3px 6px}
+  main{padding:16px 14px 8px; max-width:560px; margin:0 auto}
+  h2{font-size:15px; margin:18px 4px 10px; color:var(--pink-dark); text-transform:uppercase; letter-spacing:.6px}
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px; margin-bottom:10px}
+  .row{display:flex; align-items:center; gap:10px}
+  .grow{flex:1; min-width:0}
+  .btn{
+    border:none; border-radius:14px; padding:12px 16px; font-size:15px; font-weight:700;
+    background:var(--pink); color:#fff; cursor:pointer; width:100%;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn.gold{background:linear-gradient(135deg,#e3b64b,var(--gold)); color:#3d2a05}
+  .btn.ghost{background:var(--pink-soft); color:var(--pink-dark)}
+  .btn.small{width:auto; padding:8px 13px; font-size:13.5px; border-radius:11px}
+  .btn.danger{background:#fde8e8; color:var(--red)}
+  .fab{
+    position:fixed; right:16px; bottom:calc(92px + env(safe-area-inset-bottom));
+    width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#ffb300,var(--pink)); color:#fff; font-size:30px; line-height:1;
+    box-shadow:0 6px 20px rgba(230,0,126,.45); z-index:40; display:none;
+  }
+  nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    background:#fff; border-top:1.5px solid var(--pink-soft);
+    display:flex; padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav button{
+    flex:1; border:none; background:none; padding:9px 0 7px; cursor:pointer;
+    color:var(--muted); font-size:11.5px; font-weight:600;
+  }
+  nav button .ico{display:block; font-size:22px; margin-bottom:2px; filter:grayscale(.9); opacity:.65}
+  nav button.on{color:var(--pink)}
+  nav button.on .ico{filter:none; opacity:1}
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; padding:8px 13px; border-radius:999px;
+    background:var(--pink-soft); color:var(--pink-dark); font-size:14px; font-weight:600;
+    border:2px solid transparent; cursor:pointer; user-select:none;
+  }
+  .chip.on{background:var(--pink); color:#fff}
+  .chip.goldOn{background:linear-gradient(135deg,#e3b64b,var(--gold)); color:#3d2a05}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  input[type=text],textarea,select{
+    width:100%; border:2px solid var(--pink-soft); border-radius:13px; padding:11px 13px;
+    font-size:16px; color:var(--ink); background:#fff; outline:none; font-family:inherit;
+  }
+  input:focus,textarea:focus{border-color:var(--pink)}
+  label{font-size:12.5px; font-weight:700; color:var(--muted); display:block; margin:12px 2px 5px; text-transform:uppercase; letter-spacing:.5px}
+  .seg{display:flex; background:var(--pink-soft); border-radius:13px; padding:4px; gap:4px}
+  .seg button{
+    flex:1; border:none; border-radius:10px; padding:9px 4px; font-size:14.5px; font-weight:700;
+    background:none; color:var(--pink-dark); cursor:pointer;
+  }
+  .seg button.on{background:#fff; color:var(--pink); box-shadow:0 2px 6px rgba(0,0,0,.12)}
+  /* expense list */
+  .exp{display:flex; align-items:center; gap:12px; padding:12px 14px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:8px; cursor:pointer}
+  .exp .emoji{font-size:26px; width:40px; height:40px; border-radius:12px; background:var(--pink-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0}
+  .exp .t{font-weight:700; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .exp .s{font-size:12.5px; color:var(--muted); margin-top:2px}
+  .exp .amt{font-weight:800; font-size:15px; white-space:nowrap; text-align:right}
+  .exp .cur{font-size:11px; color:var(--muted); text-align:right}
+  .day{font-size:12px; font-weight:800; color:var(--muted); margin:14px 6px 7px; letter-spacing:.4px}
+  /* balances */
+  .bal{display:flex; align-items:center; gap:10px; padding:10px 2px}
+  .bal .name{width:92px; font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bal .barwrap{flex:1; height:14px; border-radius:8px; background:#f6e0ec; overflow:hidden; display:flex}
+  .bal .half{flex:1; position:relative}
+  .bal .bar{position:absolute; top:0; bottom:0; border-radius:8px}
+  .bal .num{width:98px; text-align:right; font-weight:800; font-size:13.5px; white-space:nowrap}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  .transfer{display:flex; align-items:center; gap:8px; padding:11px 0; border-bottom:1px dashed var(--pink-soft); font-size:14.5px}
+  .transfer:last-child{border-bottom:none}
+  .transfer b{white-space:nowrap}
+  .transfer .amt{margin-left:auto; font-weight:800; color:var(--pink-dark); white-space:nowrap}
+  .note{font-size:13px; color:var(--muted); line-height:1.45; margin:8px 4px}
+  .warn{background:#fff8e6; border:1.5px solid #f2d998; color:#7a5b00; border-radius:14px; padding:11px 13px; font-size:13.5px; line-height:1.4; margin-bottom:10px}
+  .empty{text-align:center; padding:38px 20px; color:var(--muted)}
+  .empty .big{font-size:52px; margin-bottom:10px}
+  /* modal */
+  .overlay{position:fixed; inset:0; background:rgba(67,16,47,.55); z-index:60; display:none; align-items:flex-end; justify-content:center}
+  .overlay.show{display:flex}
+  .sheet{
+    background:#fff; width:100%; max-width:560px; border-radius:24px 24px 0 0;
+    padding:18px 18px calc(18px + env(safe-area-inset-bottom)); max-height:92vh; overflow-y:auto;
+  }
+  .sheet h3{margin:0 0 4px; font-size:18px; color:var(--pink-dark)}
+  .handle{width:44px; height:5px; border-radius:3px; background:var(--pink-soft); margin:0 auto 12px}
+  .catgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+  .cat{border:2px solid var(--pink-soft); border-radius:13px; padding:8px 2px; text-align:center; cursor:pointer; background:#fff}
+  .cat .e{font-size:22px} .cat .l{font-size:10.5px; font-weight:700; color:var(--muted); margin-top:2px}
+  .cat.on{border-color:var(--pink); background:var(--pink-soft)}
+  .totrow{display:flex; justify-content:space-between; font-size:14px; padding:6px 2px}
+  .totrow b{font-variant-numeric:tabular-nums}
+  .pill{font-size:11px; background:var(--gold-soft); color:#6b4d00; border-radius:999px; padding:3px 9px; font-weight:800}
+  .linklike{color:var(--pink); font-weight:700; text-decoration:underline; cursor:pointer}
+  .partrow{display:flex; align-items:center; gap:9px; padding:9px 0; border-bottom:1px dashed var(--pink-soft)}
+  .partrow:last-child{border-bottom:none}
+  .partrow input{flex:1}
+  .crown{font-size:22px; cursor:pointer; filter:grayscale(1); opacity:.35; flex-shrink:0}
+  .crown.on{filter:none; opacity:1}
+  .x{color:var(--red); font-weight:800; font-size:18px; cursor:pointer; padding:4px 8px; flex-shrink:0}
+  .copybox{font-family:ui-monospace,monospace; font-size:11px; word-break:break-all; background:var(--pink-bg); border-radius:12px; padding:10px; max-height:110px; overflow:auto; color:var(--muted)}
+  .toast{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:calc(100px + env(safe-area-inset-bottom));
+    background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:600;
+    z-index:99; opacity:0; transition:opacity .25s; pointer-events:none; max-width:86vw; text-align:center;
+  }
+  .toast.show{opacity:1}
+  .setupWrap{max-width:560px; margin:0 auto; padding:8px 16px}
+  .bigTitle{font-size:26px; margin:18px 0 4px; color:var(--pink-dark)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="deco">🌴</div><div class="deco2">💍</div>
+  <h1 id="hTitle">Despedida en Río 💍</h1>
+  <div class="sub" id="hSub">Gastos del viaje · sin cuentas, sin drama ✨ <span class="syncpill" id="syncPill" onclick="fullSync(true)">📴</span></div>
+</header>
+
+<main id="main"></main>
+
+<button class="fab" id="fab" onclick="openExpense()">＋</button>
+
+<nav id="nav">
+  <button data-v="gastos" class="on" onclick="go('gastos')"><span class="ico">🍹</span>Gastos</button>
+  <button data-v="saldos" onclick="go('saldos')"><span class="ico">💸</span>Saldos</button>
+  <button data-v="ajustes" onclick="go('ajustes')"><span class="ico">⚙️</span>Ajustes</button>
+</nav>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================= Estado ================= */
+const KEY='despedida-rio-gastos-v1';
+/* ==== Supabase (completar con tu proyecto) ==== */
+const SUPA={
+  url:'https://ivdqpkyxwhdcsxtidwox.supabase.co',
+  key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2ZHFwa3l4d2hkY3N4dGlkd294Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNTIyMTAsImV4cCI6MjEwMDkyODIxMH0.KVJObJZJE3o-GzniHTcK6i-gCXyjpXKZWwOf2LDL7Bk'
+}; // anon public key (pública por diseño)
+const TABLE='despedida_items';
+/* ==== Grupo precargado ==== */
+const PRESET=[
+  {id:'jesi', name:'Jesi', e:'🧉', bride:false},
+  {id:'agus', name:'Agus', e:'🍹', bride:false},
+  {id:'cami', name:'Cami', e:'🌺', bride:false},
+  {id:'jowi', name:'Jowi', e:'🦩', bride:false},
+  {id:'meri', name:'Meri', e:'🍓', bride:false},
+  {id:'orne', name:'Orne', e:'🐬', bride:false},
+  {id:'vicky',name:'Vicky',e:'🌙', bride:false},
+  {id:'lau',  name:'Lau',  e:'👰', bride:true},
+];
+const EMOJIS=['🧉','🍹','🌺','🦩','🍓','🐬','🌙','👰','🍑','🐚','🍍','🫧','🌈','🍒','⭐','🐆','🥥','🌊','💄','🎀','🦋','✨','👑','🍾','💃','🏖️','🐠','🍬','🌴','🍸'];
+const CURS=['BRL','ARS','USD'];
+const SYM={ARS:'$',USD:'US$',BRL:'R$'};
+const CURNAME={ARS:'Pesos',USD:'Dólares',BRL:'Reales'};
+const CATS=[
+  {id:'comida', e:'🍹', l:'Comida y tragos'},
+  {id:'salidas',e:'💃', l:'Fiesta'},
+  {id:'paseos', e:'🏖️', l:'Paseos'},
+  {id:'traslado',e:'🚕', l:'Traslados'},
+  {id:'aloja', e:'🏨', l:'Alojamiento'},
+  {id:'novia', e:'👰', l:'La novia'},
+  {id:'compras',e:'🛍️', l:'Compras'},
+  {id:'otro',  e:'✨', l:'Otro'},
+];
+const catOf=id=>CATS.find(c=>c.id===id)||CATS[7];
+
+let state=null;
+let view='gastos';
+let dispCur='ARS';
+let editingId=null;
+
+function blank(){return {v:1, title:'Despedida en Río', titleUp:0, parts:PRESET.map(p=>({...p, up:0})), rates:{usdArs:null, brlArs:null, up:0}, exps:[]};}
+
+const store={
+  get(){ try{return localStorage.getItem(KEY);}catch(e){return null;} },
+  set(v){ try{localStorage.setItem(KEY,v);}catch(e){} }
+};
+function load(){
+  const raw=store.get();
+  if(raw){ try{ state=Object.assign(blank(), JSON.parse(raw)); }catch(e){ state=blank(); } }
+  else state=blank();
+}
+function save(){ store.set(JSON.stringify(state)); }
+function uid(){ try{return crypto.randomUUID().slice(0,8);}catch(e){return Math.random().toString(36).slice(2,10);} }
+function now(){ return Date.now(); }
+
+/* ================= Utilidades ================= */
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(n){
+  const r=Math.round(n*100)/100;
+  const dec=Number.isInteger(r)?0:2;
+  return new Intl.NumberFormat('es-AR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(r);
+}
+function money(n,cur){ return SYM[cur]+' '+fmt(n); }
+function parseAmt(s){
+  s=String(s||'').trim().replace(/\s/g,'');
+  if(/,\d{1,2}$/.test(s)) s=s.replace(/\./g,'').replace(',','.');
+  else s=s.replace(/,/g,'');
+  const n=parseFloat(s);
+  return (isFinite(n)&&n>0)?n:null;
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function liveParts(){ return state.parts.filter(p=>!p.del); }
+function liveExps(){ return state.exps.filter(e=>!e.del); }
+function pName(id){ const p=state.parts.find(p=>p.id===id); return p?p.name:'—'; }
+function pTag(id){ const p=state.parts.find(p=>p.id===id); return p?((p.e?p.e+' ':'')+esc(p.name)):'—'; }
+function pTagRaw(id){ const p=state.parts.find(p=>p.id===id); return p?((p.e?p.e+' ':'')+p.name):'—'; }
+function bride(){ return liveParts().find(p=>p.bride); }
+
+/* conversión: base ARS */
+function toARS(a,cur){
+  if(cur==='ARS') return a;
+  if(cur==='USD') return state.rates.usdArs? a*state.rates.usdArs : null;
+  if(cur==='BRL') return state.rates.brlArs? a*state.rates.brlArs : null;
+  return null;
+}
+function fromARS(v,cur){
+  if(cur==='ARS') return v;
+  if(cur==='USD') return state.rates.usdArs? v/state.rates.usdArs : null;
+  if(cur==='BRL') return state.rates.brlArs? v/state.rates.brlArs : null;
+  return null;
+}
+function conv(a,from,to){ if(from===to) return a; const ars=toARS(a,from); return ars==null?null:fromARS(ars,to); }
+function curSet(){ return [...new Set(liveExps().map(e=>e.cur))]; }
+function ratesReady(){
+  const cs=curSet();
+  const need=new Set(cs); need.add(dispCur);
+  if(need.size<=1) return true;
+  if(need.has('USD')&&!state.rates.usdArs) return false;
+  if(need.has('BRL')&&!state.rates.brlArs) return false;
+  return true;
+}
+
+/* ================= Cálculo de saldos ================= */
+/* net por persona en moneda display; null si faltan tipos de cambio */
+function netBalances(){
+  const nets={}; liveParts().forEach(p=>nets[p.id]=0);
+  for(const e of liveExps()){
+    const amt=conv(e.amt,e.cur,dispCur);
+    if(amt==null) return null;
+    const split=e.split.filter(id=>nets[id]!==undefined);
+    if(!split.length) continue;
+    const share=amt/split.length;
+    if(nets[e.payer]!==undefined) nets[e.payer]+=amt;
+    split.forEach(id=>nets[id]-=share);
+  }
+  return nets;
+}
+/* transferencias mínimas (greedy) */
+function settle(nets){
+  const EPS=0.01;
+  const deb=[],cre=[];
+  for(const[id,v]of Object.entries(nets)){
+    if(v<-EPS) deb.push({id,v:-v});
+    else if(v>EPS) cre.push({id,v});
+  }
+  deb.sort((a,b)=>b.v-a.v); cre.sort((a,b)=>b.v-a.v);
+  const out=[]; let i=0,j=0;
+  while(i<deb.length&&j<cre.length){
+    const x=Math.min(deb[i].v,cre[j].v);
+    out.push({from:deb[i].id,to:cre[j].id,amt:x});
+    deb[i].v-=x; cre[j].v-=x;
+    if(deb[i].v<EPS)i++;
+    if(cre[j].v<EPS)j++;
+  }
+  return out;
+}
+function totalsByCur(){
+  const t={};
+  for(const e of liveExps()) t[e.cur]=(t[e.cur]||0)+e.amt;
+  return t;
+}
+
+/* ================= Navegación / render ================= */
+function go(v){
+  view=v;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  render();
+}
+function render(){
+  const m=document.getElementById('main');
+  document.getElementById('fab').style.display = (liveParts().length&&view==='gastos')?'block':'none';
+  document.getElementById('hTitle').innerHTML=esc(state.title)+' 💍';
+  if(!liveParts().length){ m.innerHTML=setupHTML(); document.getElementById('nav').style.display='none'; return; }
+  document.getElementById('nav').style.display='flex';
+  if(view==='gastos') m.innerHTML=gastosHTML();
+  else if(view==='saldos') m.innerHTML=saldosHTML();
+  else m.innerHTML=ajustesHTML();
+}
+
+/* ---------- Setup inicial ---------- */
+let setupNames=[];
+function setupHTML(){
+  return `<div class="setupWrap">
+    <div style="text-align:center;font-size:56px;margin-top:10px">👰🌴🍹</div>
+    <div class="bigTitle" style="text-align:center">¡Arranca la despedida!</div>
+    <p class="note" style="text-align:center">Cargá los nombres del grupo (pueden ser apodos). Tocá la corona para marcar a la novia 👑</p>
+    <div class="card">
+      <div class="row">
+        <input type="text" id="newName" placeholder="Nombre o apodo" onkeydown="if(event.key==='Enter')addSetupName()">
+        <button class="btn small" onclick="addSetupName()">Sumar</button>
+      </div>
+      <div id="setupList" style="margin-top:6px">${setupListHTML()}</div>
+    </div>
+    <button class="btn gold" style="margin-top:8px" onclick="finishSetup()">¡Listas, a Río! 🌴</button>
+  </div>`;
+}
+function setupListHTML(){
+  if(!setupNames.length) return '<p class="note" style="text-align:center">Todavía no hay nadie 🫣</p>';
+  return setupNames.map((p,i)=>`<div class="partrow">
+    <span class="crown ${p.bride?'on':''}" onclick="setupBride(${i})">👑</span>
+    <span class="grow" style="font-weight:700">${esc(p.name)}</span>
+    <span class="x" onclick="setupNames.splice(${i},1);refreshSetup()">✕</span>
+  </div>`).join('');
+}
+function refreshSetup(){ const el=document.getElementById('setupList'); if(el) el.innerHTML=setupListHTML(); }
+function addSetupName(){
+  const inp=document.getElementById('newName');
+  const n=inp.value.trim();
+  if(!n) return;
+  if(setupNames.some(p=>p.name.toLowerCase()===n.toLowerCase())){ toast('Ese nombre ya está 😅'); return; }
+  setupNames.push({name:n, bride:false});
+  inp.value=''; inp.focus(); refreshSetup();
+}
+function setupBride(i){ setupNames.forEach((p,j)=>p.bride=(j===i? !p.bride:false)); refreshSetup(); }
+function finishSetup(){
+  if(setupNames.length<2){ toast('Cargá al menos 2 personas'); return; }
+  const t=now();
+  state.parts=setupNames.map(p=>({id:uid(), name:p.name, bride:p.bride, up:t}));
+  save(); go('gastos');
+}
+
+/* ---------- Vista Gastos ---------- */
+function gastosHTML(){
+  const exps=liveExps().sort((a,b)=>b.ts-a.ts);
+  if(!exps.length) return `<div class="empty">
+    <div class="big">🍾</div>
+    <b>Todavía no hay gastos</b>
+    <p class="note">Tocá el <b>＋</b> para anotar el primero.<br>Caipirinhas, uber, la cena de la novia… ¡todo va acá!</p>
+  </div>`;
+  const tot=totalsByCur();
+  let html=`<div class="card"><div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">TOTAL DEL VIAJE</div>`;
+  html+=Object.entries(tot).map(([c,v])=>`<div class="totrow"><span>${CURNAME[c]}</span><b>${money(v,c)}</b></div>`).join('');
+  html+=`</div>`;
+  let lastDay='';
+  for(const e of exps){
+    const d=new Date(e.ts);
+    const day=d.toLocaleDateString('es-AR',{weekday:'long', day:'numeric', month:'short'});
+    if(day!==lastDay){ html+=`<div class="day">${day.toUpperCase()}</div>`; lastDay=day; }
+    const c=catOf(e.cat);
+    const nP=e.split.length;
+    html+=`<div class="exp" onclick="openExpense('${e.id}')">
+      <div class="emoji">${c.e}</div>
+      <div class="grow"><div class="t">${esc(e.desc)}</div>
+      <div class="s">pagó <b>${pTag(e.payer)}</b> · entre ${nP===liveParts().length?'todas':nP}</div></div>
+      <div><div class="amt">${money(e.amt,e.cur)}</div><div class="cur">${CURNAME[e.cur]}</div></div>
+    </div>`;
+  }
+  return html;
+}
+
+/* ---------- Vista Saldos ---------- */
+function saldosHTML(){
+  let html=`<div class="seg" style="margin-bottom:14px">`+
+    CURS.map(c=>`<button class="${dispCur===c?'on':''}" onclick="dispCur='${c}';render()">${SYM[c]} ${CURNAME[c]}</button>`).join('')+`</div>`;
+  if(!liveExps().length) return html+`<div class="empty"><div class="big">💅</div><b>Sin gastos, sin deudas</b><p class="note">Cuando carguen gastos, acá van a ver quién le debe a quién.</p></div>`;
+  if(!ratesReady()){
+    html+=`<div class="warn">⚠️ Para mezclar monedas falta cargar el tipo de cambio. Ponelo en <span class="linklike" onclick="go('ajustes')">Ajustes</span> y listo. Mientras tanto, abajo tenés los totales por moneda.</div>`;
+    const tot=totalsByCur();
+    html+=`<div class="card">`+Object.entries(tot).map(([c,v])=>`<div class="totrow"><span>Total en ${CURNAME[c].toLowerCase()}</span><b>${money(v,c)}</b></div>`).join('')+`</div>`;
+    return html;
+  }
+  const nets=netBalances();
+  const maxAbs=Math.max(...Object.values(nets).map(Math.abs),1);
+  const totalARS=liveExps().reduce((s,e)=>s+toARS(e.amt,e.cur),0);
+  const totalDisp=fromARS(totalARS,dispCur);
+  html+=`<div class="card" style="text-align:center">
+    <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">GASTAMOS EN TOTAL</div>
+    <div style="font-size:28px;font-weight:800;color:var(--pink-dark)">${money(totalDisp,dispCur)}</div>
+    <div class="note" style="margin:2px 0 0">≈ ${money(totalDisp/liveParts().length,dispCur)} por persona ✨</div>
+  </div>`;
+  html+=`<h2>Cómo viene cada una</h2><div class="card">`;
+  for(const p of liveParts()){
+    const v=nets[p.id];
+    const w=Math.min(100,Math.abs(v)/maxAbs*100);
+    const posBar = v>0.01? `<span class="bar" style="left:0;width:${w}%;background:var(--green)"></span>`:'';
+    const negBar = v<-0.01? `<span class="bar" style="right:0;width:${w}%;background:var(--red)"></span>`:'';
+    html+=`<div class="bal">
+      <div class="name">${p.bride?'👑':p.e||''} ${esc(p.name)}</div>
+      <div class="barwrap"><span class="half">${negBar}</span><span class="half">${posBar}</span></div>
+      <div class="num ${v>0.01?'pos':v<-0.01?'neg':''}">${v>0.01?'+':''}${money(v,dispCur)}</div>
+    </div>`;
+  }
+  html+=`</div><p class="note">Verde = puso de más y le deben 💚 · Rojo = debe poner 💸</p>`;
+  const ts=settle(nets);
+  html+=`<h2>Quién le paga a quién</h2><div class="card">`;
+  if(!ts.length) html+=`<p class="note" style="text-align:center;margin:4px">¡Están a mano! 🥂</p>`;
+  else html+=ts.map(t=>`<div class="transfer"><b>${pTag(t.from)}</b> ➜ <b>${pTag(t.to)}</b><span class="amt">${money(t.amt,dispCur)}</span></div>`).join('');
+  html+=`</div>`;
+  html+=`<button class="btn gold" style="margin-top:10px" onclick="shareSummary()">Compartir resumen por WhatsApp 💬</button>`;
+  return html;
+}
+
+/* ---------- Vista Ajustes ---------- */
+function ajustesHTML(){
+  const r=state.rates;
+  return `
+  <h2>Tipo de cambio</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0">Cargá cuánto vale cada moneda en pesos argentinos. Se usa para mezclar monedas en los saldos — pueden ajustarlo cuando quieran.</p>
+    <label>1 dólar (US$) en pesos</label>
+    <input type="text" inputmode="decimal" id="rUsd" value="${r.usdArs??''}" placeholder="ej: 1450">
+    <label>1 real (R$) en pesos</label>
+    <input type="text" inputmode="decimal" id="rBrl" value="${r.brlArs??''}" placeholder="ej: 270">
+    <div style="margin-top:12px"><button class="btn" onclick="saveRates()">Guardar tipo de cambio</button></div>
+    ${r.usdArs&&r.brlArs?`<p class="note" style="text-align:center">Con esto, 1 US$ ≈ R$ ${fmt(r.usdArs/r.brlArs)}</p>`:''}
+  </div>
+
+  <h2>El grupo</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0">Tocá tu emoji y elegí el que te representa 💅 La corona marca a la novia.</p>
+    <div id="partsList">${liveParts().map(p=>`
+      <div class="partrow">
+        <span class="crown ${p.bride?'on':''}" title="novia" onclick="toggleBride('${p.id}')">👑</span>
+        <span class="pemoji" onclick="partEmoji('${p.id}')">${p.e||'🙂'}</span>
+        <input type="text" value="${esc(p.name)}" onchange="renamePart('${p.id}',this.value)">
+        <span class="x" onclick="removePart('${p.id}')">✕</span>
+      </div>`).join('')}
+    </div>
+    <div class="row" style="margin-top:10px">
+      <input type="text" id="addName" placeholder="Sumar a alguien más" onkeydown="if(event.key==='Enter')addPart()">
+      <button class="btn small" onclick="addPart()">Sumar</button>
+    </div>
+    <label style="margin-top:14px">Nombre del viaje</label>
+    <input type="text" value="${esc(state.title)}" onchange="state.title=this.value.trim()||'Despedida en Río';state.titleUp=now();markDirty('meta_title');save();render()">
+  </div>
+
+  <h2>Sync entre celus ☁️</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0">${syncNote()}</p>
+    <button class="btn" onclick="fullSync(true)">Sincronizar ahora 🔄</button>
+    <div style="height:8px"></div>
+    <button class="btn ghost" onclick="shareData()">Plan B: mandar datos por WhatsApp 💌</button>
+    <div style="height:8px"></div>
+    <button class="btn ghost" onclick="openImport()">Plan B: importar un código 📥</button>
+  </div>
+
+  <h2>Peligro 🙈</h2>
+  <div class="card">
+    <p class="note" style="margin-top:0">Borra lo guardado en este celular. Si el grupo está en la nube, al sincronizar se vuelve a bajar todo.</p>
+    <button class="btn danger" onclick="resetAll()">Borrar datos de este celular</button>
+  </div>
+  <p class="note" style="text-align:center">Hecho con 💖 para la despedida · Río 2026 🌴</p>`;
+}
+
+function saveRates(){
+  const u=parseAmt(document.getElementById('rUsd').value);
+  const b=parseAmt(document.getElementById('rBrl').value);
+  state.rates={usdArs:u||null, brlArs:b||null, up:now()};
+  markDirty('meta_rates');
+  save(); toast('Tipo de cambio guardado ✔'); render();
+}
+function toggleBride(id){
+  const t=now();
+  state.parts.forEach(p=>{ const nv=(p.id===id? !p.bride:false); if(nv!==p.bride){p.bride=nv;p.up=t;markDirty('p_'+p.id);} });
+  save(); render();
+}
+function renamePart(id,name){
+  name=name.trim(); if(!name){render();return;}
+  const p=state.parts.find(p=>p.id===id);
+  if(p){p.name=name;p.up=now();markDirty('p_'+p.id);save();render();}
+}
+function partEmoji(id){
+  pickEmoji(em=>{
+    const p=state.parts.find(p=>p.id===id);
+    if(p){p.e=em;p.up=now();markDirty('p_'+p.id);save();render();}
+  });
+}
+function addPart(){
+  const inp=document.getElementById('addName');
+  const n=inp.value.trim(); if(!n)return;
+  if(liveParts().some(p=>p.name.toLowerCase()===n.toLowerCase())){toast('Ese nombre ya está 😅');return;}
+  const used=new Set(liveParts().map(p=>p.e));
+  const p={id:uid(),name:n,e:EMOJIS.find(e=>!used.has(e))||'✨',bride:false,up:now()};
+  state.parts.push(p); markDirty('p_'+p.id);
+  save(); render();
+}
+function removePart(id){
+  const used=liveExps().some(e=>e.payer===id||e.split.includes(id));
+  if(used){ toast('Tiene gastos asociados, no se puede sacar 😬'); return; }
+  const p=state.parts.find(p=>p.id===id);
+  if(p && confirm('¿Sacar a '+p.name+' del grupo?')){ p.del=1; p.up=now(); markDirty('p_'+p.id); save(); render(); }
+}
+let emojiCb=null;
+function pickEmoji(cb){
+  emojiCb=cb;
+  document.getElementById('sheet').innerHTML=`
+    <div class="handle"></div>
+    <h3>Elegí tu emoji ✨</h3>
+    <div class="egrid" style="margin-top:12px">${EMOJIS.map(e=>`<span onclick="emojiCb('${e}');closeSheet()">${e}</span>`).join('')}</div>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function resetAll(){
+  if(confirm('¿Seguro? Se borra lo guardado en este celular.')&&confirm('Última chance 😅 ¿borramos?')){
+    state=blank(); setupNames=[]; dirty.clear(); persistDirty(); save(); go('gastos');
+  }
+}
+
+/* ---------- Alta / edición de gasto ---------- */
+let fCur='BRL', fCat='comida', fPayer=null, fSplit=null;
+function openExpense(id){
+  editingId=id||null;
+  const e=id? state.exps.find(x=>x.id===id):null;
+  fCur=e?e.cur:'BRL';
+  fCat=e?e.cat:'comida';
+  fPayer=e?e.payer:liveParts()[0].id;
+  fSplit=e? new Set(e.split): new Set(liveParts().map(p=>p.id));
+  const sheet=document.getElementById('sheet');
+  sheet.innerHTML=`
+    <div class="handle"></div>
+    <h3>${e?'Editar gasto ✏️':'Nuevo gasto 🍹'}</h3>
+    <label>¿Qué fue?</label>
+    <input type="text" id="fDesc" placeholder="Caipirinhas en Ipanema" value="${e?esc(e.desc):''}">
+    <label>Categoría</label>
+    <div class="catgrid" id="fCats">${CATS.map(c=>`<div class="cat ${fCat===c.id?'on':''}" onclick="fCat='${c.id}';paintCats()"><div class="e">${c.e}</div><div class="l">${c.l}</div></div>`).join('')}</div>
+    <label>¿Cuánto?</label>
+    <input type="text" inputmode="decimal" id="fAmt" placeholder="0,00" value="${e?String(e.amt).replace('.',','):''}">
+    <label>Moneda</label>
+    <div class="seg" id="fCurs">${CURS.map(c=>`<button class="${fCur===c?'on':''}" onclick="fCur='${c}';paintCurs()">${SYM[c]} ${CURNAME[c]}</button>`).join('')}</div>
+    <label>¿Quién pagó?</label>
+    <div class="chips" id="fPayers">${liveParts().map(p=>`<span class="chip ${fPayer===p.id?'on':''}" onclick="fPayer='${p.id}';paintPayers()">${p.e?p.e+' ':''}${esc(p.name)}</span>`).join('')}</div>
+    <label>¿Entre quiénes se divide?</label>
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn small ghost" onclick="splitAll()">Todas</button>
+      ${bride()?`<button class="btn small gold" onclick="splitNoBride()">Todas menos la novia 👑</button>`:''}
+    </div>
+    <div class="chips" id="fSplits">${splitChipsHTML()}</div>
+    <div style="height:16px"></div>
+    <button class="btn" onclick="saveExpense()">${e?'Guardar cambios':'Anotar gasto ✔'}</button>
+    ${e?`<div style="height:8px"></div><button class="btn danger" onclick="deleteExpense('${e.id}')">Eliminar gasto 🗑</button>`:''}
+  `;
+  document.getElementById('overlay').classList.add('show');
+  if(!e) setTimeout(()=>document.getElementById('fDesc').focus(),150);
+}
+function splitChipsHTML(){
+  return liveParts().map(p=>`<span class="chip ${fSplit.has(p.id)?'on':''}" onclick="toggleSplit('${p.id}')">${p.e?p.e+' ':''}${esc(p.name)}</span>`).join('');
+}
+function paintCats(){ document.getElementById('fCats').querySelectorAll('.cat').forEach((el,i)=>el.classList.toggle('on',CATS[i].id===fCat)); }
+function paintCurs(){ document.getElementById('fCurs').querySelectorAll('button').forEach((el,i)=>el.classList.toggle('on',CURS[i]===fCur)); }
+function paintPayers(){ const ps=liveParts(); document.getElementById('fPayers').querySelectorAll('.chip').forEach((el,i)=>el.classList.toggle('on',ps[i].id===fPayer)); }
+function paintSplits(){ document.getElementById('fSplits').innerHTML=splitChipsHTML(); }
+function toggleSplit(id){ if(fSplit.has(id))fSplit.delete(id); else fSplit.add(id); paintSplits(); }
+function splitAll(){ fSplit=new Set(liveParts().map(p=>p.id)); paintSplits(); }
+function splitNoBride(){ const b=bride(); fSplit=new Set(liveParts().filter(p=>!b||p.id!==b.id).map(p=>p.id)); paintSplits(); }
+function saveExpense(){
+  const desc=document.getElementById('fDesc').value.trim();
+  const amt=parseAmt(document.getElementById('fAmt').value);
+  if(!desc){toast('Contanos qué fue el gasto 😊');return;}
+  if(!amt){toast('El monto no parece válido 🤔');return;}
+  if(!fSplit.size){toast('Elegí entre quiénes se divide');return;}
+  const t=now();
+  if(editingId){
+    const e=state.exps.find(x=>x.id===editingId);
+    Object.assign(e,{desc,amt,cur:fCur,cat:fCat,payer:fPayer,split:[...fSplit],up:t});
+    markDirty('e_'+e.id);
+  }else{
+    const e={id:uid(),ts:t,up:t,desc,amt,cur:fCur,cat:fCat,payer:fPayer,split:[...fSplit]};
+    state.exps.push(e); markDirty('e_'+e.id);
+  }
+  save(); closeSheet(); go('gastos'); toast(editingId?'Gasto actualizado ✔':'¡Anotado! 🎉');
+  editingId=null;
+}
+function deleteExpense(id){
+  if(!confirm('¿Eliminar este gasto?'))return;
+  const e=state.exps.find(x=>x.id===id);
+  if(e){e.del=1;e.up=now();markDirty('e_'+e.id);}
+  save(); closeSheet(); render(); toast('Gasto eliminado 🗑');
+}
+function closeSheet(){ document.getElementById('overlay').classList.remove('show'); }
+
+/* ---------- Sync ---------- */
+function encodeData(){
+  const payload={v:1, title:state.title, parts:state.parts, rates:state.rates, exps:state.exps};
+  return 'RIO1.'+btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+function decodeData(code){
+  code=String(code||'').trim();
+  const m=code.match(/RIO1\.[A-Za-z0-9+/=]+/);
+  if(!m) return null;
+  try{
+    const json=decodeURIComponent(escape(atob(m[0].slice(5))));
+    const d=JSON.parse(json);
+    if(!d||d.v!==1||!Array.isArray(d.parts)||!Array.isArray(d.exps)) return null;
+    return d;
+  }catch(e){ return null; }
+}
+function brideDedupe(){
+  if(state.parts.filter(p=>p.bride&&!p.del).length>1){
+    let best=null; state.parts.forEach(p=>{ if(p.bride&&!p.del){ if(!best||(p.up||0)>(best.up||0)){ if(best)best.bride=false; best=p; } else p.bride=false; } });
+  }
+}
+function mergeData(d){
+  const byId=(arr)=>{const m={};arr.forEach(x=>m[x.id]=x);return m;};
+  // participantes
+  const pm=byId(state.parts);
+  d.parts.forEach(p=>{ if(!pm[p.id]||((p.up||0)>(pm[p.id].up||0))) pm[p.id]=p; });
+  state.parts=Object.values(pm);
+  brideDedupe();
+  // gastos
+  const em=byId(state.exps);
+  let added=0;
+  d.exps.forEach(e=>{
+    if(!em[e.id]){ em[e.id]=e; if(!e.del)added++; }
+    else if((e.up||0)>(em[e.id].up||0)) em[e.id]=e;
+  });
+  state.exps=Object.values(em);
+  // tipo de cambio y título
+  if(d.rates&&(d.rates.up||0)>(state.rates.up||0)) state.rates=d.rates;
+  if(d.title&&(!state.title||state.title==='Despedida en Río')) state.title=d.title;
+  save();
+  return added;
+}
+function shareData(){
+  const code=encodeData();
+  const text='💍 Datos de gastos de la despedida — copiá este mensaje completo y pegalo en la app (Ajustes → Importar):\n\n'+code;
+  if(navigator.share){ navigator.share({text}).catch(()=>{}); }
+  else{
+    copyText(text);
+    window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+  }
+}
+function copyText(t){
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast('Copiado 📋')).catch(()=>fallbackCopy(t)); }
+  else fallbackCopy(t);
+}
+function fallbackCopy(t){
+  const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta);
+  ta.select(); try{document.execCommand('copy');toast('Copiado 📋');}catch(e){} ta.remove();
+}
+function openImport(){
+  const sheet=document.getElementById('sheet');
+  sheet.innerHTML=`
+    <div class="handle"></div>
+    <h3>Importar datos 📥</h3>
+    <p class="note">Pegá acá el mensaje que te mandó tu amiga (el que empieza con <b>RIO1.</b> o el mensaje completo de WhatsApp). Los gastos se combinan, nada se pierde.</p>
+    <textarea id="impBox" rows="5" placeholder="Pegá el código acá..."></textarea>
+    <div style="height:12px"></div>
+    <button class="btn" onclick="doImport()">Combinar datos ✔</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function doImport(){
+  const d=decodeData(document.getElementById('impBox').value);
+  if(!d){ toast('No pude leer el código 😕 Fijate que esté completo'); return; }
+  const added=mergeData(d);
+  markAllDirty();
+  closeSheet(); go('gastos');
+  toast(added?('¡Listo! '+added+' gasto'+(added>1?'s':'')+' nuevo'+(added>1?'s':'')+' 🎉'):'Datos combinados, ya estabas al día ✔');
+}
+function shareSummary(){
+  if(!ratesReady()){ toast('Falta el tipo de cambio en Ajustes'); return; }
+  const nets=netBalances(); const ts=settle(nets);
+  const totARS=liveExps().reduce((s,e)=>s+toARS(e.amt,e.cur),0);
+  let text='💍🌴 *'+state.title+'* — resumen de gastos\n\n';
+  text+='Total: *'+money(fromARS(totARS,dispCur),dispCur)+'* ('+CURNAME[dispCur].toLowerCase()+')\n\n';
+  text+='*Cómo viene cada una:*\n';
+  for(const p of liveParts()){
+    const v=nets[p.id];
+    text+=(p.bride?'👑 ':(p.e?p.e+' ':''))+p.name+': '+(v>0.01?'le deben '+money(v,dispCur)+' 💚':v<-0.01?'debe '+money(-v,dispCur)+' 💸':'a mano 🥂')+'\n';
+  }
+  if(ts.length){
+    text+='\n*Para quedar a mano:*\n';
+    ts.forEach(t=>{ text+='• '+pTagRaw(t.from)+' ➜ '+pTagRaw(t.to)+': '+money(t.amt,dispCur)+'\n'; });
+  } else text+='\n¡Estamos todas a mano! 🥂\n';
+  text+='\n✨ App de la despedida';
+  if(navigator.share){ navigator.share({text}).catch(()=>{}); }
+  else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
+
+/* ---------- Sync en tiempo real con Supabase ---------- */
+let supa=null, rtOn=false, pushTimer=null, syncing=false;
+let dirty=new Set();
+try{ dirty=new Set(JSON.parse(localStorage.getItem(KEY+'-dirty')||'[]')); }catch(e){}
+function persistDirty(){ try{localStorage.setItem(KEY+'-dirty',JSON.stringify([...dirty]));}catch(e){} }
+function markDirty(...keys){ keys.forEach(k=>dirty.add(k)); persistDirty(); pushSoon(); setPill(); }
+function markAllDirty(){
+  state.parts.forEach(p=>dirty.add('p_'+p.id));
+  state.exps.forEach(e=>dirty.add('e_'+e.id));
+  dirty.add('meta_rates'); dirty.add('meta_title');
+  persistDirty(); pushSoon();
+}
+function syncTimeout(ms){ return new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms)); }
+function rowFor(k){
+  if(k==='meta_rates') return {id:k, kind:'meta', data:state.rates, up:state.rates.up||0};
+  if(k==='meta_title') return {id:k, kind:'meta', data:{title:state.title}, up:state.titleUp||0};
+  if(k.startsWith('p_')){ const p=state.parts.find(x=>'p_'+x.id===k); return p?{id:k,kind:'part',data:p,up:p.up||0}:null; }
+  if(k.startsWith('e_')){ const e=state.exps.find(x=>'e_'+x.id===k); return e?{id:k,kind:'exp',data:e,up:e.up||0}:null; }
+  return null;
+}
+function mergeItem(row){
+  if(!row||!row.id||!row.data) return false;
+  if(row.kind==='part'){
+    const p=row.data, cur=state.parts.find(x=>x.id===p.id);
+    if(!cur){ state.parts.push(p); return true; }
+    if((p.up||0)>(cur.up||0)){ Object.assign(cur,p); return true; }
+    return false;
+  }
+  if(row.kind==='exp'){
+    const e=row.data, cur=state.exps.find(x=>x.id===e.id);
+    if(!cur){ state.exps.push(e); return true; }
+    if((e.up||0)>(cur.up||0)){ Object.assign(cur,e); return true; }
+    return false;
+  }
+  if(row.id==='meta_rates'){ if((row.up||0)>(state.rates.up||0)){ state.rates=row.data; return true; } return false; }
+  if(row.id==='meta_title'){ if((row.up||0)>(state.titleUp||0)){ state.title=row.data.title||state.title; state.titleUp=row.up||0; return true; } return false; }
+  return false;
+}
+function initSync(){
+  if(supa || !SUPA.url || !SUPA.key || !window.supabase){ setPill(); return; }
+  supa=window.supabase.createClient(SUPA.url, SUPA.key);
+  fullSync();
+  supa.channel('despedida-rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:TABLE},pl=>{
+      if(pl.new && mergeItem(pl.new)){ brideDedupe(); save(); render(); }
+    })
+    .subscribe(s=>{ rtOn=(s==='SUBSCRIBED'); setPill(); });
+  window.addEventListener('online',()=>fullSync());
+}
+async function fullSync(manual){
+  if(!supa){ if(manual)toast('Falta configurar la nube ⚙️ (o no cargó la librería)'); setPill(); return; }
+  if(syncing) return;
+  syncing=true; setPill();
+  try{
+    const {data,error}=await Promise.race([supa.from(TABLE).select('*'), syncTimeout(8000)]);
+    if(error) throw error;
+    let ch=false;
+    (data||[]).forEach(r=>{ if(mergeItem(r)) ch=true; });
+    if(ch){ brideDedupe(); save(); }
+    syncing=false;
+    await pushDirty();
+    if(ch||manual) render();
+    if(manual) toast('Sincronizado ✔ ☁️');
+  }catch(e){
+    syncing=false;
+    if(manual) toast('No pude sincronizar 😕 ¿Hay internet?');
+  }
+  setPill();
+}
+async function pushDirty(){
+  if(!supa || !dirty.size){ setPill(); return; }
+  const keys=[...dirty];
+  const rows=keys.map(rowFor).filter(Boolean);
+  try{
+    if(rows.length){
+      const {error}=await Promise.race([supa.from(TABLE).upsert(rows), syncTimeout(8000)]);
+      if(error) throw error;
+    }
+    keys.forEach(k=>dirty.delete(k)); persistDirty();
+  }catch(e){ /* se reintenta en el próximo sync */ }
+  setPill();
+}
+function pushSoon(){ clearTimeout(pushTimer); pushTimer=setTimeout(pushDirty,700); }
+function setPill(){
+  const el=document.getElementById('syncPill');
+  if(!el) return;
+  if(!SUPA.url||!SUPA.key){ el.textContent='📴 solo local'; return; }
+  if(syncing){ el.textContent='🔄 sincronizando…'; return; }
+  if(dirty.size){ el.textContent='⬆️ por subir: '+dirty.size; return; }
+  el.textContent = rtOn ? '🟢 en vivo' : '☁️ al día';
+}
+function syncNote(){
+  if(!SUPA.url||!SUPA.key) return 'La nube todavía no está configurada: por ahora los datos viven solo en este celular. Los botones de plan B siguen funcionando.';
+  return rtOn
+    ? 'Están <b>en vivo</b> 🟢: lo que carga una les aparece a todas al instante. El botón es solo para forzar una actualización si algo se ve raro.'
+    : 'Conectadas a la nube ☁️. Si algo no aparece, tocá sincronizar. Sin internet, todo se guarda en el celu y se sube solo al volver la señal.';
+}
+
+/* ---------- Import por link (#d=...) ---------- */
+function checkHash(){
+  if(location.hash.startsWith('#d=')){
+    const d=decodeData(decodeURIComponent(location.hash.slice(3)));
+    history.replaceState(null,'',location.pathname+location.search);
+    if(d && confirm('Te compartieron datos de gastos 💌 ¿Los combinamos con los tuyos?')){
+      const added=mergeData(d); toast(added?('¡Listo! '+added+' gastos nuevos 🎉'):'Datos combinados ✔'); render();
+    }
+  }
+}
+
+load(); render(); checkHash();
+if(window.supabase) initSync(); else setPill();
+window.initSync=initSync;
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) fullSync(); });
+</script>
+</body>
+</html>
