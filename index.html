@@ -158,6 +158,16 @@
   }
   .albumband b{flex:1}
   .albumband .arrow{font-size:18px; font-weight:800}
+  /* contador grande */
+  .countCard{
+    background:linear-gradient(135deg,#C98790 0%, var(--pink) 55%, #7C444C 100%);
+    color:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px 14px 14px; text-align:center; margin-bottom:12px; position:relative; overflow:hidden;
+  }
+  .countCard::after{content:'🌴'; position:absolute; right:-4px; top:-10px; font-size:58px; opacity:.22; transform:rotate(14deg)}
+  .cc-pre{font-size:12px; font-weight:800; letter-spacing:4px; opacity:.92}
+  .cc-num{font-size:72px; font-weight:800; line-height:1.05; text-shadow:0 4px 16px rgba(0,0,0,.22)}
+  .cc-post{font-size:13.5px; font-weight:700; opacity:.95; margin-top:3px}
   /* plan / itinerario */
   .plan{display:flex; align-items:center; gap:11px; padding:11px 14px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:8px; cursor:pointer}
   .plan .chk{font-size:22px; flex-shrink:0}
@@ -201,7 +211,8 @@
 <button class="fab" id="fab" onclick="view==='plan'?openPlanItem():openExpense()">＋</button>
 
 <nav id="nav">
-  <button data-v="gastos" class="on" onclick="go('gastos')"><span class="ico">🍹</span>Gastos</button>
+  <button data-v="inicio" class="on" onclick="go('inicio')"><span class="ico">💖</span>Inicio</button>
+  <button data-v="gastos" onclick="go('gastos')"><span class="ico">🍹</span>Gastos</button>
   <button data-v="plan" onclick="go('plan')"><span class="ico">🗓️</span>Plan</button>
   <button data-v="saldos" onclick="go('saldos')"><span class="ico">💸</span>Saldos</button>
   <button data-v="ajustes" onclick="go('ajustes')"><span class="ico">⚙️</span>Ajustes</button>
@@ -255,7 +266,7 @@ const CATS=[
 const catOf=id=>CATS.find(c=>c.id===id)||CATS[7];
 
 let state=null;
-let view='gastos';
+let view='inicio';
 let dispCur='ARS';
 let editingId=null;
 
@@ -371,13 +382,29 @@ function go(v){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   render();
 }
+function countCard(){
+  if(!FECHA_VIAJE) return '';
+  const t0=new Date(FECHA_VIAJE+'T00:00:00');
+  const diff=t0-new Date();
+  if(diff>0){
+    const days=Math.floor(diff/86400000);
+    if(days>=1) return `<div class="countCard"><div class="cc-pre">✨ FALTAN ✨</div><div class="cc-num">${days}</div><div class="cc-post">${days===1?'día':'días'} para Río 🌴 · despedida de Lau 💍</div></div>`;
+    return `<div class="countCard"><div class="cc-num" style="font-size:33px;padding:10px 0">¡MAÑANA NOS VAMOS! 🧳✨</div></div>`;
+  }
+  const fin=new Date(t0); fin.setDate(fin.getDate()+3); fin.setHours(23,59,0,0); // hasta el lunes 17
+  if(new Date()<=fin) return `<div class="countCard"><div class="cc-num" style="font-size:33px;padding:10px 0">¡ESTAMOS EN RÍO! 🍹🇧🇷</div></div>`;
+  return '';
+}
 function render(){
   const m=document.getElementById('main');
-  document.getElementById('fab').style.display = (liveParts().length&&(view==='gastos'||view==='plan'))?'block':'none';
+  document.getElementById('fab').style.display = (liveParts().length&&(view==='inicio'||view==='gastos'||view==='plan'))?'block':'none';
   document.getElementById('hTitle').innerHTML=esc(state.title)+' 💍';
+  document.getElementById('hSub').innerHTML='sin cuentas, sin drama ✨ <span class="syncpill" id="syncPill" onclick="fullSync(true)">📴</span>';
+  setPill();
   if(!liveParts().length){ m.innerHTML=setupHTML(); document.getElementById('nav').style.display='none'; return; }
   document.getElementById('nav').style.display='flex';
-  if(view==='gastos') m.innerHTML=gastosHTML();
+  if(view==='inicio') m.innerHTML=inicioHTML();
+  else if(view==='gastos') m.innerHTML=gastosHTML();
   else if(view==='plan') m.innerHTML=planHTML();
   else if(view==='saldos') m.innerHTML=saldosHTML();
   else m.innerHTML=ajustesHTML();
@@ -425,6 +452,49 @@ function finishSetup(){
   save(); go('gastos');
 }
 
+/* ---------- Vista Inicio ---------- */
+function inicioHTML(){
+  let html=countCard()+albumBand();
+  const exps=liveExps();
+  if(!exps.length) return html+`<div class="empty">
+    <div class="big">🍾</div>
+    <b>Todavía no hay gastos</b>
+    <p class="note">Cuando arranquen a gastar, acá vas a ver cuánto puso cada una. Tocá el <b>＋</b> para anotar el primero.</p>
+  </div>`;
+  html+=`<div class="seg" style="margin-bottom:12px">`+
+    CURS.map(c=>`<button class="${dispCur===c?'on':''}" onclick="dispCur='${c}';render()">${SYM[c]} ${CURNAME[c]}</button>`).join('')+`</div>`;
+  if(!ratesReady()){
+    html+=`<div class="warn">⚠️ Para mezclar monedas falta el tipo de cambio en <span class="linklike" onclick="go('ajustes')">Ajustes</span>. Mientras tanto, los totales por moneda:</div>`;
+    html+=`<div class="card">`+Object.entries(totalsByCur()).map(([c,v])=>`<div class="totrow"><span>Total en ${CURNAME[c].toLowerCase()}</span><b>${money(v,c)}</b></div>`).join('')+`</div>`;
+    return html;
+  }
+  const paid={}; liveParts().forEach(p=>paid[p.id]=0);
+  let totARS=0;
+  for(const e of exps){
+    const a=toARS(e.amt,e.cur); totARS+=a;
+    if(paid[e.payer]!==undefined) paid[e.payer]+=a;
+  }
+  const tot=fromARS(totARS,dispCur);
+  html+=`<div class="card" style="text-align:center">
+    <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">GASTAMOS EN TOTAL</div>
+    <div style="font-size:28px;font-weight:800;color:var(--pink-dark)">${money(tot,dispCur)}</div>
+    <div class="note" style="margin:2px 0 0">≈ ${money(tot/liveParts().length,dispCur)} por persona ✨</div>
+  </div>`;
+  html+=`<h2>Cuánto puso cada una</h2><div class="card">`;
+  const max=Math.max(...Object.values(paid),1);
+  for(const p of [...liveParts()].sort((a,b)=>paid[b.id]-paid[a.id])){
+    const v=fromARS(paid[p.id],dispCur);
+    const w=Math.round(paid[p.id]/max*100);
+    html+=`<div class="bal">
+      <div class="name">${p.bride?'👑':p.e||''} ${esc(p.name)}</div>
+      <div class="barwrap" style="position:relative"><span class="bar" style="left:0;width:${w}%;background:var(--pink)"></span></div>
+      <div class="num">${money(v,dispCur)}</div>
+    </div>`;
+  }
+  html+=`</div><p class="note">Esto es lo que <b>pagó</b> cada una. Para ver quién le debe a quién, andá a Saldos 💸</p>`;
+  return html;
+}
+
 /* ---------- Vista Gastos ---------- */
 function albumBand(){
   if(!ALBUM_URL) return '';
@@ -432,14 +502,13 @@ function albumBand(){
 }
 function gastosHTML(){
   const exps=liveExps().sort((a,b)=>b.ts-a.ts);
-  if(!exps.length) return albumBand()+`<div class="empty">
+  if(!exps.length) return `<div class="empty">
     <div class="big">🍾</div>
     <b>Todavía no hay gastos</b>
     <p class="note">Tocá el <b>＋</b> para anotar el primero.<br>Caipirinhas, uber, la cena de la novia… ¡todo va acá!</p>
   </div>`;
   const tot=totalsByCur();
-  let html=albumBand();
-  html+=`<div class="card"><div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">TOTAL DEL VIAJE</div>`;
+  let html=`<div class="card"><div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">TOTAL DEL VIAJE</div>`;
   html+=Object.entries(tot).map(([c,v])=>`<div class="totrow"><span>${CURNAME[c]}</span><b>${money(v,c)}</b></div>`).join('');
   html+=`</div>`;
   let lastDay='';
@@ -469,7 +538,7 @@ function fmtPlanDay(ds){
 }
 function planHTML(){
   const items=livePlan().sort((a,b)=>((a.date||'9999')+(a.time||'99:99')).localeCompare((b.date||'9999')+(b.time||'99:99')));
-  let html=albumBand();
+  let html='';
   if(!items.length) return html+`<div class="empty">
     <div class="big">🗓️</div>
     <b>Todavía no hay plan</b>
