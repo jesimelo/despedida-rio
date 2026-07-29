@@ -125,6 +125,7 @@
   .sheet{
     background:#fff; width:100%; max-width:560px; border-radius:24px 24px 0 0;
     padding:18px 18px calc(18px + env(safe-area-inset-bottom)); max-height:92vh; overflow-y:auto;
+    overscroll-behavior:contain;
   }
   .sheet h3{margin:0 0 4px; font-size:18px; color:var(--pink-dark)}
   .handle{width:44px; height:5px; border-radius:3px; background:var(--pink-soft); margin:0 auto 12px}
@@ -537,13 +538,28 @@ function fmtPlanDay(ds){
   return d.toLocaleDateString('es-AR',{weekday:'long', day:'numeric', month:'short'}).toUpperCase();
 }
 function planHTML(){
-  const items=livePlan().sort((a,b)=>((a.date||'9999')+(a.time||'99:99')).localeCompare((b.date||'9999')+(b.time||'99:99')));
+  const all=livePlan();
+  const items=all.filter(i=>i.date).sort((a,b)=>((a.date)+(a.time||'99:99')).localeCompare((b.date)+(b.time||'99:99')));
+  const props=all.filter(i=>!i.date).sort((a,b)=>(a.up||0)-(b.up||0));
   let html='';
-  if(!items.length) return html+`<div class="empty">
+  if(!all.length) return `<div class="empty">
     <div class="big">🗓️</div>
     <b>Todavía no hay plan</b>
-    <p class="note">Tocá el <b>＋</b> y armen el itinerario entre todas:<br>playa, cena, la sorpresa para Lau 🤫... acá va todo, con día y hora.</p>
+    <p class="note">Tocá el <b>＋</b> y tiren ideas: playa, cena, la sorpresa 🤫...<br>Si no le ponés día, queda como <b>propuesta</b> y lo definen después.</p>
   </div>`;
+  if(props.length){
+    html+=`<div class="day">💡 PROPUESTAS · DESPUÉS VEMOS CUÁNDO</div>`;
+    for(const it of props){
+      html+=`<div class="plan" onclick="openPlanItem('${it.id}')">
+        <span class="chk">💡</span>
+        <div class="grow">
+          <div class="t">${esc(it.txt)}</div>
+          <div class="n">${it.place?'📍 '+esc(it.place)+' · ':''}${it.note?esc(it.note)+' · ':''}tocá para ponerle día y hora</div>
+        </div>
+        ${it.link?`<a class="hora" style="text-decoration:none" href="${esc(it.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🗺️</a>`:''}
+      </div>`;
+    }
+  }
   const hoy=todayStr();
   let lastDay='—';
   for(const it of items){
@@ -556,8 +572,9 @@ function planHTML(){
       <span class="chk" onclick="event.stopPropagation();togglePlanDone('${it.id}')">${it.done?'✅':'⬜'}</span>
       <div class="grow" onclick="openPlanItem('${it.id}')">
         <div class="t">${esc(it.txt)}</div>
-        ${it.note?`<div class="n">${esc(it.note)}</div>`:''}
+        ${it.place||it.note?`<div class="n">${it.place?'📍 '+esc(it.place):''}${it.place&&it.note?' · ':''}${it.note?esc(it.note):''}</div>`:''}
       </div>
+      ${it.link?`<a class="hora" style="text-decoration:none" href="${esc(it.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🗺️</a>`:''}
       ${it.time?`<span class="hora">${esc(it.time)}</span>`:''}
     </div>`;
   }
@@ -572,7 +589,12 @@ function openPlanItem(id){
     <h3>${it?'Editar plan ✏️':'Nuevo plan 🗓️'}</h3>
     <label>¿Qué hacemos?</label>
     <input type="text" id="plTxt" placeholder="Atardecer en Arpoador" value="${it?esc(it.txt):''}">
-    <label>Día</label>
+    <p class="note" style="margin:8px 2px 0">Sin día queda como <b>propuesta 💡</b> — lo definen después.</p>
+    <label>Lugar (opcional)</label>
+    <input type="text" id="plLugar" placeholder="Bar do Momo, Ipanema..." value="${it&&it.place?esc(it.place):''}">
+    <label>Link de Google Maps (opcional)</label>
+    <input type="text" id="plLink" inputmode="url" placeholder="https://maps.app.goo.gl/..." value="${it&&it.link?esc(it.link):''}">
+    <label>Día (opcional)</label>
     <input type="date" id="plDate" value="${it?(it.date||''):''}">
     <label>Hora (opcional)</label>
     <input type="time" id="plTime" value="${it?(it.time||''):''}">
@@ -582,8 +604,7 @@ function openPlanItem(id){
     <button class="btn" onclick="savePlanItem()">${it?'Guardar cambios':'Agendar ✔'}</button>
     ${it?`<div style="height:8px"></div><button class="btn danger" onclick="deletePlanItem('${it.id}')">Eliminar 🗑</button>`:''}
   `;
-  document.getElementById('overlay').classList.add('show');
-  if(!it) setTimeout(()=>document.getElementById('plTxt').focus(),150);
+  showSheet();
 }
 function savePlanItem(){
   const txt=document.getElementById('plTxt').value.trim();
@@ -591,14 +612,17 @@ function savePlanItem(){
   const date=document.getElementById('plDate').value||'';
   const time=document.getElementById('plTime').value||'';
   const note=document.getElementById('plNote').value.trim();
+  const place=document.getElementById('plLugar').value.trim();
+  let link=document.getElementById('plLink').value.trim();
+  if(link&&!/^https?:\/\//i.test(link)) link='https://'+link;
   const t=now();
   if(!state.plan) state.plan=[];
   if(editingPlanId){
     const it=state.plan.find(x=>x.id===editingPlanId);
-    Object.assign(it,{txt,date,time,note,up:t});
+    Object.assign(it,{txt,date,time,note,place,link,up:t});
     markDirty('i_'+it.id);
   }else{
-    const it={id:uid(),txt,date,time,note,done:false,up:t};
+    const it={id:uid(),txt,date,time,note,place,link,done:false,up:t};
     state.plan.push(it); markDirty('i_'+it.id);
   }
   save(); closeSheet(); go('plan'); toast(editingPlanId?'Plan actualizado ✔':'¡Agendado! 🎉');
@@ -724,8 +748,12 @@ function saveRates(){
   save(); toast('Tipo de cambio guardado ✔'); render();
 }
 function toggleBride(id){
+  const p=state.parts.find(x=>x.id===id);
+  if(!p) return;
+  const msg=p.bride? '¿Sacarle la corona a '+p.name+'? Dejaría de ser la novia 👀' : '¿Marcar a '+p.name+' como LA NOVIA? 👰 (el botón "Todas menos la novia" la va a excluir a ella)';
+  if(!confirm(msg)) return;
   const t=now();
-  state.parts.forEach(p=>{ const nv=(p.id===id? !p.bride:false); if(nv!==p.bride){p.bride=nv;p.up=t;markDirty('p_'+p.id);} });
+  state.parts.forEach(q=>{ const nv=(q.id===id? !q.bride:false); if(nv!==q.bride){q.bride=nv;q.up=t;markDirty('p_'+q.id);} });
   save(); render();
 }
 function renamePart(id,name){
@@ -761,7 +789,7 @@ function pickEmoji(cb){
     <div class="handle"></div>
     <h3>Elegí tu emoji ✨</h3>
     <div class="egrid" style="margin-top:12px">${EMOJIS.map(e=>`<span onclick="emojiCb('${e}');closeSheet()">${e}</span>`).join('')}</div>`;
-  document.getElementById('overlay').classList.add('show');
+  showSheet();
 }
 function resetAll(){
   if(confirm('¿Seguro? Se borra lo guardado en este celular.')&&confirm('Última chance 😅 ¿borramos?')){
@@ -791,7 +819,7 @@ function openExpense(id){
     <label>Moneda</label>
     <div class="seg" id="fCurs">${CURS.map(c=>`<button class="${fCur===c?'on':''}" onclick="fCur='${c}';paintCurs()">${SYM[c]} ${CURNAME[c]}</button>`).join('')}</div>
     <label>¿Quién pagó?</label>
-    <div class="chips" id="fPayers">${liveParts().map(p=>`<span class="chip ${fPayer===p.id?'on':''}" onclick="fPayer='${p.id}';paintPayers()">${p.e?p.e+' ':''}${esc(p.name)}</span>`).join('')}</div>
+    <div class="chips" id="fPayers">${liveParts().map(p=>`<span class="chip ${fPayer===p.id?'on':''}" onclick="fPayer='${p.id}';paintPayers()">${p.bride?'👑 ':(p.e?p.e+' ':'')}${esc(p.name)}</span>`).join('')}</div>
     <label>¿Entre quiénes se divide?</label>
     <div class="row" style="margin-bottom:8px">
       <button class="btn small ghost" onclick="splitAll()">Todas</button>
@@ -802,11 +830,10 @@ function openExpense(id){
     <button class="btn" onclick="saveExpense()">${e?'Guardar cambios':'Anotar gasto ✔'}</button>
     ${e?`<div style="height:8px"></div><button class="btn danger" onclick="deleteExpense('${e.id}')">Eliminar gasto 🗑</button>`:''}
   `;
-  document.getElementById('overlay').classList.add('show');
-  if(!e) setTimeout(()=>document.getElementById('fDesc').focus(),150);
+  showSheet(); // sin autofocus: el teclado de iOS empujaba la hoja y tapaba "¿Qué fue?"
 }
 function splitChipsHTML(){
-  return liveParts().map(p=>`<span class="chip ${fSplit.has(p.id)?'on':''}" onclick="toggleSplit('${p.id}')">${p.e?p.e+' ':''}${esc(p.name)}</span>`).join('');
+  return liveParts().map(p=>`<span class="chip ${fSplit.has(p.id)?'on':''}" onclick="toggleSplit('${p.id}')">${p.bride?'👑 ':(p.e?p.e+' ':'')}${esc(p.name)}</span>`).join('');
 }
 function paintCats(){ document.getElementById('fCats').querySelectorAll('.cat').forEach((el,i)=>el.classList.toggle('on',CATS[i].id===fCat)); }
 function paintCurs(){ document.getElementById('fCurs').querySelectorAll('button').forEach((el,i)=>el.classList.toggle('on',CURS[i]===fCur)); }
@@ -839,7 +866,16 @@ function deleteExpense(id){
   if(e){e.del=1;e.up=now();markDirty('e_'+e.id);}
   save(); closeSheet(); render(); toast('Gasto eliminado 🗑');
 }
-function closeSheet(){ document.getElementById('overlay').classList.remove('show'); }
+function showSheet(){
+  const s=document.getElementById('sheet');
+  document.getElementById('overlay').classList.add('show');
+  s.scrollTop=0;
+  document.body.style.overflow='hidden'; // que no se scrollee el fondo en iOS
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('show');
+  document.body.style.overflow='';
+}
 
 /* ---------- Sync ---------- */
 function encodeData(){
@@ -917,7 +953,7 @@ function openImport(){
     <textarea id="impBox" rows="5" placeholder="Pegá el código acá..."></textarea>
     <div style="height:12px"></div>
     <button class="btn" onclick="doImport()">Combinar datos ✔</button>`;
-  document.getElementById('overlay').classList.add('show');
+  showSheet();
 }
 function doImport(){
   const d=decodeData(document.getElementById('impBox').value);
