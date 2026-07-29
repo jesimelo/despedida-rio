@@ -479,9 +479,8 @@ function inicioHTML(){
   html+=`<div class="card" style="text-align:center">
     <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">GASTAMOS EN TOTAL</div>
     <div style="font-size:28px;font-weight:800;color:var(--pink-dark)">${money(tot,dispCur)}</div>
-    <div class="note" style="margin:2px 0 0">≈ ${money(tot/liveParts().length,dispCur)} por persona ✨</div>
   </div>`;
-  html+=`<h2>Cuánto puso cada una</h2><div class="card">`;
+  html+=`<h2>Lo que gastó cada una</h2><div class="card">`;
   const max=Math.max(...Object.values(paid),1);
   for(const p of [...liveParts()].sort((a,b)=>paid[b.id]-paid[a.id])){
     const v=fromARS(paid[p.id],dispCur);
@@ -492,7 +491,7 @@ function inicioHTML(){
       <div class="num">${money(v,dispCur)}</div>
     </div>`;
   }
-  html+=`</div><p class="note">Esto es lo que <b>pagó</b> cada una. Para ver quién le debe a quién, andá a Saldos 💸</p>`;
+  html+=`</div><p class="note">Lo que <b>debe</b> cada una y quién le paga a quién está en Saldos 💸</p>`;
   return html;
 }
 
@@ -657,7 +656,6 @@ function saldosHTML(){
   html+=`<div class="card" style="text-align:center">
     <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">GASTAMOS EN TOTAL</div>
     <div style="font-size:28px;font-weight:800;color:var(--pink-dark)">${money(totalDisp,dispCur)}</div>
-    <div class="note" style="margin:2px 0 0">≈ ${money(totalDisp/liveParts().length,dispCur)} por persona ✨</div>
   </div>`;
   html+=`<h2>Cómo viene cada una</h2><div class="card">`;
   for(const p of liveParts()){
