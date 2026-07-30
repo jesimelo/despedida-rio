@@ -373,7 +373,7 @@ function settle(nets){
 }
 function totalsByCur(){
   const t={};
-  for(const e of liveExps()) t[e.cur]=(t[e.cur]||0)+e.amt;
+  for(const e of liveExps()){ if(e.pago) continue; t[e.cur]=(t[e.cur]||0)+e.amt; }
   return t;
 }
 
@@ -472,6 +472,7 @@ function inicioHTML(){
   const paid={}; liveParts().forEach(p=>paid[p.id]=0);
   let totARS=0;
   for(const e of exps){
+    if(e.pago) continue; // las devoluciones no son gasto del viaje
     const a=toARS(e.amt,e.cur); totARS+=a;
     if(paid[e.payer]!==undefined) paid[e.payer]+=a;
   }
@@ -516,6 +517,15 @@ function gastosHTML(){
     const d=new Date(e.ts);
     const day=d.toLocaleDateString('es-AR',{weekday:'long', day:'numeric', month:'short'});
     if(day!==lastDay){ html+=`<div class="day">${day.toUpperCase()}</div>`; lastDay=day; }
+    if(e.pago){
+      html+=`<div class="exp" onclick="openPago('${e.id}')">
+        <div class="emoji">🤝</div>
+        <div class="grow"><div class="t">${pTag(e.payer)} ➜ ${pTag(e.split[0])}</div>
+        <div class="s">pago · ya está saldado</div></div>
+        <div><div class="amt" style="color:var(--green)">${money(e.amt,e.cur)}</div><div class="cur">${CURNAME[e.cur]}</div></div>
+      </div>`;
+      continue;
+    }
     const c=catOf(e.cat);
     const nP=e.split.length;
     html+=`<div class="exp" onclick="openExpense('${e.id}')">
@@ -651,7 +661,7 @@ function saldosHTML(){
   }
   const nets=netBalances();
   const maxAbs=Math.max(...Object.values(nets).map(Math.abs),1);
-  const totalARS=liveExps().reduce((s,e)=>s+toARS(e.amt,e.cur),0);
+  const totalARS=liveExps().filter(e=>!e.pago).reduce((s,e)=>s+toARS(e.amt,e.cur),0);
   const totalDisp=fromARS(totalARS,dispCur);
   html+=`<div class="card" style="text-align:center">
     <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px">GASTAMOS EN TOTAL</div>
@@ -673,9 +683,15 @@ function saldosHTML(){
   const ts=settle(nets);
   html+=`<h2>Quién le paga a quién</h2><div class="card">`;
   if(!ts.length) html+=`<p class="note" style="text-align:center;margin:4px">¡Están a mano! 🥂</p>`;
-  else html+=ts.map(t=>`<div class="transfer"><b>${pTag(t.from)}</b> ➜ <b>${pTag(t.to)}</b><span class="amt">${money(t.amt,dispCur)}</span></div>`).join('');
+  else{
+    html+=ts.map(t=>`<div class="transfer"><b>${pTag(t.from)}</b> ➜ <b>${pTag(t.to)}</b><span class="amt">${money(t.amt,dispCur)}</span>
+      <button class="btn small gold" style="flex-shrink:0" onclick="openPago(null,'${t.from}','${t.to}',${Math.round(t.amt*100)/100},'${dispCur}')">ya pagó ✔</button></div>`).join('');
+    html+=`<p class="note" style="margin:10px 0 0">Cuando alguien salda una deuda (por transferencia, efectivo...), tocá <b>"ya pagó ✔"</b> y los saldos se actualizan al toque.</p>`;
+  }
   html+=`</div>`;
-  html+=`<button class="btn gold" style="margin-top:10px" onclick="shareSummary()">Compartir resumen por WhatsApp 💬</button>`;
+  html+=`<button class="btn ghost" style="margin-top:10px" onclick="openPago()">Registrar un pago a mano 🤝</button>
+  <div style="height:8px"></div>`;
+  html+=`<button class="btn gold" onclick="shareSummary()">Compartir resumen por WhatsApp 💬</button>`;
   return html;
 }
 
@@ -873,6 +889,58 @@ function showSheet(){
 function closeSheet(){
   document.getElementById('overlay').classList.remove('show');
   document.body.style.overflow='';
+}
+
+/* ---------- Pagos / devoluciones (settle up) ---------- */
+let fFrom=null, fTo=null, editingPagoId=null;
+function openPago(id,preFrom,preTo,preAmt,preCur){
+  editingPagoId=id||null;
+  const e=id? state.exps.find(x=>x.id===id):null;
+  const ps=liveParts();
+  fFrom=e?e.payer:(preFrom||ps[0].id);
+  fTo=e?e.split[0]:(preTo||ps.find(p=>p.id!==fFrom).id);
+  fCur=e?e.cur:(preCur||'ARS');
+  const amtVal=e?String(e.amt).replace('.',','):(preAmt?String(preAmt).replace('.',','):'');
+  document.getElementById('sheet').innerHTML=`
+    <div class="handle"></div>
+    <h3>${e?'Editar pago ✏️':'Registrar pago 🤝'}</h3>
+    <p class="note" style="margin:6px 2px 0">Para cuando alguien devuelve plata (transferencia, efectivo...). Descuenta la deuda, no suma como gasto del viaje.</p>
+    <label>¿Quién pagó?</label>
+    <div class="chips" id="pgFrom">${ps.map(p=>`<span class="chip ${fFrom===p.id?'on':''}" onclick="fFrom='${p.id}';paintPago()">${p.bride?'👑 ':(p.e?p.e+' ':'')}${esc(p.name)}</span>`).join('')}</div>
+    <label>¿A quién le pagó?</label>
+    <div class="chips" id="pgTo">${ps.map(p=>`<span class="chip ${fTo===p.id?'on':''}" onclick="fTo='${p.id}';paintPago()">${p.bride?'👑 ':(p.e?p.e+' ':'')}${esc(p.name)}</span>`).join('')}</div>
+    <label>¿Cuánto?</label>
+    <input type="text" inputmode="decimal" id="pgAmt" placeholder="0,00" value="${amtVal}">
+    <label>Moneda</label>
+    <div class="seg" id="pgCurs">${CURS.map(c=>`<button class="${fCur===c?'on':''}" onclick="fCur='${c}';paintPago()">${SYM[c]} ${CURNAME[c]}</button>`).join('')}</div>
+    <div style="height:16px"></div>
+    <button class="btn" onclick="savePago()">${e?'Guardar cambios':'Registrar ✔'}</button>
+    ${e?`<div style="height:8px"></div><button class="btn danger" onclick="deleteExpense('${e.id}')">Eliminar pago 🗑</button>`:''}
+  `;
+  showSheet();
+}
+function paintPago(){
+  const ps=liveParts();
+  document.getElementById('pgFrom').querySelectorAll('.chip').forEach((el,i)=>el.classList.toggle('on',ps[i].id===fFrom));
+  document.getElementById('pgTo').querySelectorAll('.chip').forEach((el,i)=>el.classList.toggle('on',ps[i].id===fTo));
+  document.getElementById('pgCurs').querySelectorAll('button').forEach((el,i)=>el.classList.toggle('on',CURS[i]===fCur));
+}
+function savePago(){
+  const amt=parseAmt(document.getElementById('pgAmt').value);
+  if(!amt){toast('El monto no parece válido 🤔');return;}
+  if(fFrom===fTo){toast('No puede pagarse a sí misma 😅');return;}
+  const t=now();
+  const desc='Pago '+pName(fFrom)+' → '+pName(fTo);
+  if(editingPagoId){
+    const e=state.exps.find(x=>x.id===editingPagoId);
+    Object.assign(e,{desc,amt,cur:fCur,payer:fFrom,split:[fTo],up:t});
+    markDirty('e_'+e.id);
+  }else{
+    const e={id:uid(),ts:t,up:t,pago:true,desc,amt,cur:fCur,cat:'pago',payer:fFrom,split:[fTo]};
+    state.exps.push(e); markDirty('e_'+e.id);
+  }
+  editingPagoId=null;
+  save(); closeSheet(); render(); toast('Pago registrado 🤝 ¡Saldos actualizados!');
 }
 
 /* ---------- Sync ---------- */
